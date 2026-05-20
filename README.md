@@ -1,4 +1,4 @@
-# 🗳️ Secure Voting DApp
+# 🗳️ Voting DApp
 
 A decentralized voting application built using **Solidity, React.js, and Web3.js**, enabling transparent and tamper-proof elections on the blockchain.
 
