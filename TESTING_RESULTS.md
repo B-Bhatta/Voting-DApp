@@ -77,7 +77,7 @@ Verified with a fresh ignored virtual environment:
 - Uvicorn served `/health` as `{"api_status":"Online","database":"Offline","blockchain":"Disconnected"}`.
 - Python syntax compilation and `docker compose config` passed.
 
-Docker PostgreSQL and Ganache were not running, so live login against PostgreSQL and contract connectivity were not claimed.
+The Docker PostgreSQL setup was subsequently verified manually on host port 5433. Ganache contract connectivity still requires the local deployment steps in the README.
 
 ## Frontend build
 

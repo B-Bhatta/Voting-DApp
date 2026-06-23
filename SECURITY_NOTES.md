@@ -19,7 +19,7 @@
 
 ## Remaining limitations
 
-- No national-ID integration
+- No Aadhaar integration
 - No voter-to-wallet identity binding
 - One vote is enforced per wallet, not per verified human
 - No ballot secrecy because `vote(candidateId)` is public on-chain
@@ -31,3 +31,4 @@
 - Login rate limiting is not implemented
 - TLS and deployment hardening are not included
 - Participation cannot be calculated from authenticated users because user identities are not bound to voting wallets
+- Contract administration depends on a single owner private key

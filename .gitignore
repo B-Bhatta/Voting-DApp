@@ -5,8 +5,16 @@ node_modules/
 venv/
 .venv/
 __pycache__/
+.pytest_cache/
 *.py[cod]
 Blockchain/artifacts/
 Blockchain/cache/
+Blockchain/typechain-types/
 coverage/
 build/
+ganache-data/
+*.log
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

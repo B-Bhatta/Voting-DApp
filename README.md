@@ -1,59 +1,118 @@
-# Hybrid Voting DApp
+# Hybrid Blockchain E-Voting DApp
 
-A local-development voting prototype that combines off-chain FastAPI/PostgreSQL authentication with wallet-signed votes recorded by a Solidity contract. The contract enforces one vote per wallet; it does not prove one vote per human or provide ballot secrecy.
+A local reproducible hybrid e-voting prototype using React, FastAPI, PostgreSQL, MetaMask, Ganache, Web3.js, and Solidity smart contracts. Off-chain credentials authenticate users through the API, while wallet-signed transactions record votes on a local Ethereum development network.
+
+> This is a research and integration prototype. It is not suitable for real public elections.
+
+## Phase 1 security fixes
+
+- `onlyOwner` authorization on `addCandidate()` and `setDates()`
+- Voting-date ordering validation
+- Candidate-list freeze after voting starts
+- `CandidateAdded`, `DatesSet`, and `VoteCast` contract events
+- bcrypt password hashing and verification through passlib
+- JWT expiration, signature verification, protected endpoints, and admin-role checks
+- Configurable chain ID validation before contract interaction
+- Visible transaction pending, confirmation, rejection, revert, and error states
+- `sessionStorage` instead of `localStorage` for the frontend token and role
+- Docker PostgreSQL local setup with a reproducible schema and seed script
+- Fourteen Hardhat tests and receipt-based gas measurements
+
+Detailed evidence is available in [TESTING_RESULTS.md](TESTING_RESULTS.md), [GAS_RESULTS.md](GAS_RESULTS.md), and [SECURITY_NOTES.md](SECURITY_NOTES.md).
 
 ## Tech stack
 
-- Solidity 0.8.19, Hardhat, ethers
-- React 18, Create React App, Web3.js, MetaMask
-- FastAPI, PostgreSQL 15, bcrypt, expiring JWTs
-- Docker Compose for local database setup
+- React 18 and Create React App
+- FastAPI
+- PostgreSQL 15 via Docker
+- Solidity 0.8.19
+- Hardhat
+- Ganache
+- MetaMask
+- Web3.js
 
-## Phase 1 security changes
+## Prerequisites
 
-- Owner-only candidate and date administration
-- Date ordering checks, candidate freeze after voting starts, and domain events
-- Automated 1-indexed contract tests and receipt-based gas measurements
-- bcrypt password verification and expiring, verified JWTs
-- JWT admin-role enforcement on voter statistics
-- Configurable chain checks, visible transaction states, and session-scoped frontend auth
-- Reproducible local PostgreSQL schema and seed script
+- Git
+- Node.js 20 LTS and npm
+- Python 3.11 or newer
+- Docker Desktop
+- Ganache
+- MetaMask browser extension
 
-See [SECURITY_NOTES.md](SECURITY_NOTES.md), [TESTING_RESULTS.md](TESTING_RESULTS.md), and [GAS_RESULTS.md](GAS_RESULTS.md).
+MetaMask is not required to run contract tests, build React, or check the API health endpoint. It is required for interactive admin and voting transactions in the browser.
 
-## Local setup
+## Local setup - PowerShell
 
-### 1. Configure the environment
+### 1. Clone and select the Phase 1 branch
 
-Copy `.env.example` to `.env`. Generate a random JWT key instead of using the placeholder:
+```powershell
+git clone https://github.com/B-Bhatta/Voting-DApp.git
+cd Voting-DApp
+git checkout phase-1-security-revision
+```
 
-```bash
+### 2. Configure local environment variables
+
+```powershell
+Copy-Item .env.example .env
 python -c "import secrets; print(secrets.token_hex(32))"
+notepad .env
 ```
 
-Set `JWT_SECRET_KEY` to that value. Never commit `.env`.
+Replace the placeholder `JWT_SECRET_KEY` with the generated value. Never commit `.env`.
 
-### 2. Start PostgreSQL and seed users
+The committed Docker configuration publishes PostgreSQL on host port `5433` to avoid conflicts with an existing PostgreSQL service on `5432`. Keep this URL in `.env`:
 
-```bash
+```env
+DATABASE_URL=postgresql://voting_user:voting_password@localhost:5433/voting_db
+```
+
+If you change the Compose mapping back to `5432:5432`, also change `DATABASE_URL` to port `5432`.
+
+### 3. Start PostgreSQL
+
+```powershell
 docker compose up -d db
+docker compose ps
+```
+
+### 4. Install the backend and seed development users
+
+```powershell
 python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r FastAPI\requirements.txt
+python db\seed_users.py
 ```
 
-Activate the virtual environment, then run:
+Default local-only accounts:
 
-```bash
-python -m pip install -r FastAPI/requirements.txt
-python db/seed_users.py
-```
+| Role | voter_id | Password |
+|---|---|---|
+| Admin | `admin001` | `AdminPass123!` |
+| Voter | `voter001` | `VoterPass123!` |
+| Voter 2 | `voter002` | `VoterPass456!` |
 
-The development seed credentials are printed in `db/seed_users.py`. Change them for any shared environment.
+These are dummy development credentials. Do not reuse them in a shared or production environment.
 
-### 3. Compile, test, and deploy the contract
+### 5. Start Ganache and configure MetaMask
 
-Start Ganache on `http://127.0.0.1:8545` with chain ID `1337` (`0x539`), then:
+Start Ganache with:
 
-```bash
+- RPC URL: `http://127.0.0.1:8545`
+- Chain ID: `1337` (`0x539`)
+
+In MetaMask, add a custom network with the same RPC URL and chain ID. Import:
+
+1. The first Ganache account private key as the admin/owner wallet.
+2. The second Ganache account private key as a voter wallet.
+
+Never commit or share those private keys. The account that deploys the contract becomes its owner and is the only wallet allowed to add candidates or set dates.
+
+### 6. Test and deploy the contract
+
+```powershell
 cd Blockchain
 npm install
 npm test
@@ -61,58 +120,71 @@ npm run deploy
 cd ..
 ```
 
-`npm test` recompiles the contract and synchronizes its ABI to:
+Copy the printed deployment address into both variables in `.env`:
+
+```env
+VOTING_CONTRACT_ADDRESS=0xYourDeployedAddress
+REACT_APP_CONTRACT_ADDRESS=0xYourDeployedAddress
+```
+
+Contract compilation synchronizes the current ABI to:
 
 - `src/services/voting_abi.json`
 - `FastAPI/voting_abi.json`
 
-Put the printed deployment address in both `REACT_APP_CONTRACT_ADDRESS` and `VOTING_CONTRACT_ADDRESS` in `.env`. Restart the frontend after changing a `REACT_APP_*` variable. The deployer wallet is the contract owner and must perform admin contract actions.
+### 7. Start FastAPI
 
-### 4. Start the backend
-
-From the repository root with the virtual environment active:
-
-```bash
+```powershell
 cd FastAPI
-uvicorn main:app --reload
+..\.venv\Scripts\python.exe -m uvicorn main:app --reload
 ```
 
-Useful endpoints:
+The API runs at `http://127.0.0.1:8000`. Check `http://127.0.0.1:8000/health`.
 
-- `GET /health` - public service status
-- `POST /login` - credential login
-- `GET /me` - authenticated JWT identity
-- `GET /admin/voter-stats` - admin JWT required
+### 8. Start React
 
-### 5. Start the frontend
+Open another PowerShell terminal:
 
-In a second terminal from the repository root:
-
-```bash
+```powershell
+cd Voting-DApp
 npm install
 npm start
 ```
 
-Open `http://localhost:3000`. Import a Ganache account into MetaMask and select chain ID `1337`. Admin actions must use the contract deployer account.
+Open `http://localhost:3000`, select the Ganache network in MetaMask, and connect the appropriate wallet.
 
-## Run checks
+## Verification results
 
-```bash
-cd Blockchain
-npm test
-cd ..
-npm run build
-python -m compileall FastAPI db
-```
+The Phase 1 Hardhat suite passes **14 tests with 0 failures**. See [TESTING_RESULTS.md](TESTING_RESULTS.md) for the full test list and terminal evidence. The React production build also completes successfully.
 
-The measured results for this revision are recorded in [TESTING_RESULTS.md](TESTING_RESULTS.md) and [GAS_RESULTS.md](GAS_RESULTS.md).
+## Gas measurements
+
+| Operation | gasUsed |
+|---|---:|
+| Deploy | 648,731 |
+| `addCandidate` | 122,509 |
+| `setDates` | 69,467 |
+| `vote` | 74,011 |
+
+These are transaction-receipt measurements from a local Hardhat/Ganache development environment. They are not mainnet fee or cost estimates. Reproduction details are in [GAS_RESULTS.md](GAS_RESULTS.md).
+
+## Repository evidence
+
+- Branch: `phase-1-security-revision`
+- Phase 1 implementation commit: `b7fa6500d66f63d0d4bfa3b7d40cc7df5f2aac04`
+- Solidity compiler: `0.8.19`
+- Optimizer: enabled, 200 runs
 
 ## Known limitations
 
-- One vote is enforced per wallet, not per verified human.
-- A login identity is not cryptographically bound to a wallet.
-- Votes are public on-chain, so ballot secrecy is not provided.
-- There is one election state; multi-election scoping is not implemented.
-- This revision is validated on local development networks only.
-- Frontend route checks aid navigation and are not a security boundary.
-- This prototype is not ready for production elections.
+- One vote is enforced per wallet, not per human.
+- There is no voter-to-wallet identity binding.
+- Votes and candidate IDs are public on-chain; ballot secrecy is not provided.
+- Aadhaar integration is not implemented.
+- Multi-election or `electionId` scoping is not implemented.
+- Login rate limiting is not implemented.
+- Administration depends on a single owner key.
+- Validation is limited to local development networks.
+- The system is not production election-ready.
+
+Frontend route guards are navigation helpers only. Contract `onlyOwner` checks and backend JWT role checks are the actual authorization boundaries.

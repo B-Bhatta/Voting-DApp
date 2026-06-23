@@ -9,7 +9,7 @@ load_dotenv()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 database_url = os.getenv(
     "DATABASE_URL",
-    "postgresql://voting_user:voting_password@localhost:5432/voting_db",
+    "postgresql://voting_user:voting_password@localhost:5433/voting_db",
 )
 
 users = [
