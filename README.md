@@ -2,9 +2,16 @@
 
 ![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
 
+
 A local reproducible hybrid e-voting prototype using React, FastAPI, PostgreSQL, MetaMask, Ganache, Web3.js, and Solidity smart contracts. Off-chain credentials authenticate users through the API, while wallet-signed transactions record votes on a local Ethereum development network.
 
 > This is a prototype.
+
+##Technical Preprint
+
+This project is accompanied by a technical preprint archived on Zenodo:
+
+Bhattacharyya, B. (2026). A Hybrid Blockchain-Based E-Voting Prototype: Implementation and Security Analysis of Off-Chain Authentication with On-Chain Vote Recording (Version v1.0.0-preprint). Zenodo. https://doi.org/10.5281/zenodo.20818397
 
 ## Security and reliability
 
