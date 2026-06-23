@@ -7,7 +7,7 @@ A local reproducible hybrid e-voting prototype using React, FastAPI, PostgreSQL,
 
 > This is a prototype.
 
-##Technical Preprint
+## Technical Preprint
 
 This project is accompanied by a technical preprint archived on Zenodo:
 
