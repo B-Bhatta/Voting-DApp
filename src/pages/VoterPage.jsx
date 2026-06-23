@@ -1,185 +1,95 @@
-import React, { useState, useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
+import StatusMessage from "../components/StatusMessage";
 import WalletConnect from "../components/WalletConnect";
-import { getContract } from "../services/blockchain";
+import {
+  describeTransactionError,
+  getContract,
+  validateNetwork,
+} from "../services/blockchain";
 
 export default function VoterPage() {
   const [account, setAccount] = useState("");
-  const [activeTab, setActiveTab] = useState("vote");
-
+  const [activeTab, setActiveTab] = useState("candidates");
   const [candidates, setCandidates] = useState([]);
+  const [networkError, setNetworkError] = useState(null);
+  const [transactionStatus, setTransactionStatus] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [loadingData, setLoadingData] = useState(true);
+  const [loadingData, setLoadingData] = useState(false);
 
-  // =========================
-  // LOAD CANDIDATES (FIXED)
-  // =========================
-  const loadBallotData = async () => {
-    if (!account) return;
-
+  const loadBallotData = useCallback(async () => {
+    if (!account || networkError) return;
+    setLoadingData(true);
     try {
-      setLoadingData(true);
-
+      await validateNetwork();
       const contract = getContract();
-
-      
-      const count = Number(
-        await contract.methods.countCandidates().call()
-      );
-
-      console.log("Candidate Count:", count);
-
-      const tempArray = [];
-
-      for (let i = 1; i <= count; i++) {
-        try {
-          // ✅ FIXED: mapping getter
-          const res = await contract.methods
-            .candidates(i)
-            .call();
-
-          console.log("Candidate:", res);
-
-          tempArray.push({
-            id: Number(res.id || res[0]),
-            name: res.name || res[1],
-            party: res.party || res[2],
-            voteCount: Number(res.voteCount || res[3]),
-          });
-
-        } catch (err) {
-          console.log(`Error fetching candidate ${i}:`, err);
-        }
+      const count = Number(await contract.methods.countCandidates().call());
+      const loaded = [];
+      for (let id = 1; id <= count; id += 1) {
+        const value = await contract.methods.candidates(id).call();
+        loaded.push({
+          id: Number(value.id || value[0]),
+          name: value.name || value[1],
+          party: value.party || value[2],
+        });
       }
-
-      setCandidates(tempArray);
-
-    } catch (err) {
-      console.error("Error loading ballot:", err);
+      setCandidates(loaded);
+    } catch (error) {
+      setTransactionStatus(describeTransactionError(error));
     } finally {
       setLoadingData(false);
     }
-  };
+  }, [account, networkError]);
 
-  // =========================
-  // LOAD WHEN WALLET CONNECTS
-  // =========================
   useEffect(() => {
-    if (account) {
-      loadBallotData();
-    }
-  }, [account]);
+    loadBallotData();
+  }, [loadBallotData]);
 
-  // =========================
-  // CAST VOTE
-  // =========================
   const handleCastVote = async (candidateId) => {
     if (!account) {
-      return alert("Connect wallet first");
+      setTransactionStatus({ type: "error", message: "Connect your wallet first." });
+      return;
     }
-
+    setIsProcessing(true);
+    setTransactionStatus({ type: "pending", message: "Confirm the vote in MetaMask." });
     try {
-      setIsProcessing(true);
-
-      const contract = getContract();
-
-      await contract.methods
-        .vote(candidateId)
-        .send({
-          from: account,
-          gas: 300000,
-        });
-
-      alert("Vote Cast Successfully!");
-
+      await validateNetwork();
+      await getContract().methods.vote(candidateId).send({ from: account });
+      setTransactionStatus({ type: "confirmed", message: "Vote confirmed on-chain." });
       await loadBallotData();
-
-    } catch (err) {
-      console.error(err);
-
-      alert(
-        "Voting Failed: " +
-          (err?.message || "Unknown Error")
-      );
+    } catch (error) {
+      setTransactionStatus(describeTransactionError(error));
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // =========================
-  // UI
-  // =========================
   return (
     <div className="flex min-h-screen bg-[#0F172A]">
-
-      <Sidebar
-        walletAddress={account}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        role="voter"
-      />
-
+      <Sidebar walletAddress={account} activeTab={activeTab} setActiveTab={setActiveTab} role="voter" />
       <main className="flex-1 p-10">
-
-        <header className="flex justify-between mb-10 items-center">
-
-          <h1 className="text-3xl font-black text-white italic tracking-tighter">
-            SECURE
-            <span className="text-blue-500">VOTE</span>
-          </h1>
-
-          <WalletConnect onConnect={setAccount} />
-
+        <header className="mb-8 flex items-center justify-between">
+          <h1 className="text-3xl font-black italic text-white">SECURE<span className="text-blue-500">VOTE</span></h1>
+          <WalletConnect onConnect={setAccount} onNetworkError={setNetworkError} />
         </header>
-
-        <div className="bg-slate-800/40 p-8 rounded-3xl border border-slate-700/50 max-w-2xl">
-
-          <h2 className="text-xl font-bold mb-2 text-blue-400">
-            Vote Here
-          </h2>
-
-          <p className="text-slate-400 mb-6">
-            Select one candidate and submit your vote.
-          </p>
-
-          {loadingData ? (
-            <p className="text-slate-400">Loading candidates...</p>
-          ) : candidates.length === 0 ? (
-            <p className="text-slate-400">No candidates available.</p>
-          ) : (
+        {networkError && <StatusMessage status={{ type: "error", message: networkError }} />}
+        <StatusMessage status={transactionStatus} />
+        <section className="max-w-2xl rounded-3xl border border-slate-700/50 bg-slate-800/40 p-8">
+          <h2 className="mb-2 text-xl font-bold text-blue-400">Digital Ballot</h2>
+          <p className="mb-6 text-slate-400">Select one candidate and confirm the wallet transaction.</p>
+          {loadingData ? <p className="text-slate-400">Loading candidates...</p> : candidates.length === 0 ? <p className="text-slate-400">No candidates available.</p> : (
             <div className="space-y-4">
-
-              {candidates.map((c, index) => (
-                <div
-                  key={index}
-                  className="bg-slate-900/50 p-5 rounded-2xl border border-slate-700 flex justify-between items-center"
-                >
-
-                  <div>
-                    <h3 className="text-white font-bold text-lg">
-                      {c.name}
-                    </h3>
-                    <p className="text-slate-400 text-sm">
-                      {c.party}
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() => handleCastVote(c.id)}
-                    disabled={isProcessing}
-                    className="bg-blue-600 hover:bg-blue-500 px-5 py-2 rounded-xl text-white font-bold"
-                  >
+              {candidates.map((candidate) => (
+                <div key={candidate.id} className="flex items-center justify-between rounded-2xl border border-slate-700 bg-slate-900/50 p-5">
+                  <div><h3 className="text-lg font-bold text-white">{candidate.name}</h3><p className="text-sm text-slate-400">{candidate.party}</p></div>
+                  <button onClick={() => handleCastVote(candidate.id)} disabled={isProcessing || Boolean(networkError)} className="rounded-xl bg-blue-600 px-5 py-2 font-bold text-white hover:bg-blue-500 disabled:cursor-not-allowed disabled:opacity-50">
                     {isProcessing ? "Processing..." : "Vote"}
                   </button>
-
                 </div>
               ))}
-
             </div>
           )}
-
-        </div>
-
+        </section>
       </main>
     </div>
   );
