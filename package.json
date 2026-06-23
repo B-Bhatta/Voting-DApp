@@ -2,6 +2,7 @@
   "name": "jec-voting-frontend",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "dependencies": {
     "axios": "^1.6.0",
     "ethers": "^5.7.2",
