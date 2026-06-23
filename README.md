@@ -1,5 +1,7 @@
 # Hybrid Blockchain E-Voting DApp
 
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+
 A local reproducible hybrid e-voting prototype using React, FastAPI, PostgreSQL, MetaMask, Ganache, Web3.js, and Solidity smart contracts. Off-chain credentials authenticate users through the API, while wallet-signed transactions record votes on a local Ethereum development network.
 
 > This is a research and integration prototype. It is not suitable for real public elections.
@@ -188,3 +190,7 @@ These are transaction-receipt measurements from a local Hardhat/Ganache developm
 - The system is not production election-ready.
 
 Frontend route guards are navigation helpers only. Contract `onlyOwner` checks and backend JWT role checks are the actual authorization boundaries.
+
+## License
+
+This project is released under the MIT License. See [LICENSE](LICENSE) for details.

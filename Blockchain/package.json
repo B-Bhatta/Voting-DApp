@@ -2,6 +2,7 @@
   "name": "voting-dapp-blockchain",
   "version": "1.0.0",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "compile": "hardhat compile && node scripts/export-abi.js",
     "test": "hardhat test && node scripts/export-abi.js",
