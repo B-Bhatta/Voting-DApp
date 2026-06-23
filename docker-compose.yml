@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: voting_db
+      POSTGRES_USER: voting_user
+      POSTGRES_PASSWORD: voting_password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+
+volumes:
+  postgres_data:

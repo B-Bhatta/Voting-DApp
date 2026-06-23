@@ -26,7 +26,11 @@ export default function Login() {
       else navigate("/voter");
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.detail || "Invalid credentials. Please try again.");
+      if (!err.response) {
+        setError("Backend unavailable. Check that FastAPI is running at the configured API URL.");
+      } else {
+        setError(err.response?.data?.detail || "Invalid credentials. Please try again.");
+      }
     } finally {
       setIsLoading(false);
     }
