@@ -2,7 +2,7 @@
 
 A local reproducible hybrid e-voting prototype using React, FastAPI, PostgreSQL, MetaMask, Ganache, Web3.js, and Solidity smart contracts. Off-chain credentials authenticate users through the API, while wallet-signed transactions record votes on a local Ethereum development network.
 
-> This is a research and integration prototype. It is not suitable for real public elections.
+> This is a prototype.
 
 ## Phase 1 security fixes
 
