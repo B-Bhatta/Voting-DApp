@@ -6,7 +6,7 @@ A local reproducible hybrid e-voting prototype using React, FastAPI, PostgreSQL,
 
 > This is a prototype.
 
-## Phase 1 security fixes
+## Security and reliability
 
 - `onlyOwner` authorization on `addCandidate()` and `setDates()`
 - Voting-date ordering validation
@@ -46,12 +46,11 @@ MetaMask is not required to run contract tests, build React, or check the API he
 
 ## Local setup - PowerShell
 
-### 1. Clone and select the Phase 1 branch
+### 1. Clone the repository
 
 ```powershell
 git clone https://github.com/B-Bhatta/Voting-DApp.git
 cd Voting-DApp
-git checkout phase-1-security-revision
 ```
 
 ### 2. Configure local environment variables
@@ -157,7 +156,7 @@ Open `http://localhost:3000`, select the Ganache network in MetaMask, and connec
 
 ## Verification results
 
-The Phase 1 Hardhat suite passes **14 tests with 0 failures**. See [TESTING_RESULTS.md](TESTING_RESULTS.md) for the full test list and terminal evidence. The React production build also completes successfully.
+The Hardhat suite passes **14 tests with 0 failures**. See [TESTING_RESULTS.md](TESTING_RESULTS.md) for the full test list and terminal evidence. The React production build also completes successfully.
 
 ## Gas measurements
 
@@ -169,13 +168,6 @@ The Phase 1 Hardhat suite passes **14 tests with 0 failures**. See [TESTING_RESU
 | `vote` | 74,011 |
 
 These are transaction-receipt measurements from a local Hardhat/Ganache development environment. They are not mainnet fee or cost estimates. Reproduction details are in [GAS_RESULTS.md](GAS_RESULTS.md).
-
-## Repository evidence
-
-- Branch: `phase-1-security-revision`
-- Phase 1 implementation commit: `b7fa6500d66f63d0d4bfa3b7d40cc7df5f2aac04`
-- Solidity compiler: `0.8.19`
-- Optimizer: enabled, 200 runs
 
 ## Known limitations
 
